@@ -1,3 +1,5 @@
+import os
+
 from socketPot import socketPot, globalMemory
 
 gv = globalMemory.GlobalVariableT24
@@ -37,6 +39,37 @@ def eraseNANDYB1(pot):
     pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE)
 
 
+# *****************************************************************************
+
+def readNANDOC1Flag(pot):
+
+    pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
+
+    # if not gv.ASIC_MODEL in ['T26']:
+    #     pot.readTransferBurst(cmd = gv.CMD_RD_NAND_OC1_FLAG, dataType = 'setting')
+    # else:
+    #     pot.readTransferLine(cmd = gv.CMD_RD_NAND_OC1_FLAG, lineNumber = 0, dataType = 'setting')
+
+    pot.readTransferLine(cmd = gv.CMD_RD_NAND_OC1_FLAG, lineNumber = 0, dataType = 'setting')
+
+    pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE)
+
+def writeNANDOC1Flag(pot):
+
+    pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
+    pot.writeTransferMono(cmd = gv.CMD_ER_NAND_OC1_FLAG)
+    pot.writeTransferLine(cmd = gv.CMD_WR_NAND_OC1_FLAG, lineNumber = 0, dataType = 'setting')
+    pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE)
+
+def eraseNANDLGDOC1Flag(pot):
+    pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
+    pot.writeTransferMono(cmd = gv.CMD_ER_NAND_OC1_FLAG)
+    pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE) 
+
+
+# ************************************************************************************
+
+
 def readNANDLGDVparam(pot):
     # PC MODE
     pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
@@ -71,6 +104,80 @@ def eraseNANDLGDVparam(pot):
     # PC MODE clear
     pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE)
 
+# *****************************************************************************
+
+
+def save_dc_lut_as_ini(dc, file_path):  
+
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+    # with open(file_path, "w", encoding="utf-8") as f:
+    #     for i, row in enumerate(dc.lut):  
+    #         f.write(f"[LUT_{i}]\n")
+    #         for index, value in enumerate(row):  
+    #             f.write(f"{index}={format(value, 'X')}\n")
+    #         f.write("\n")  
+
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write("[LUT_FIRST_ROW]\n")  
+
+        first_row = dc.lut[0]  
+        for index, value in enumerate(first_row):  
+            f.write(f"{index}={format(int(value), 'X')}\n")  
+
+
+    # with open(file_path, "w", encoding="utf-8") as f:
+    #     for i, row in enumerate(dc.lineBuffer):  
+    #         f.write(f"[lineBuffer_{i}]\n")
+    #         for index, value in enumerate(row):  
+    #             f.write(f"{index}={format(value, 'X')}\n")
+    #         f.write("\n")  
+
+
+def load_dc_lut_from_ini(dc, file_path):
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        first_row = []
+
+        for line in f:
+            line = line.strip()
+            if line.startswith("[") and line.endswith("]"):  
+                continue  
+            if "=" in line:  
+                _, value = line.split("=")  # index는 무시하고 value만 추출
+                first_row.append(int(value, 16))  # 16진수를 정수로 변환하여 저장
+
+    dc.lut[0] = first_row
+
+
+
+
+# def write_dc_lut_as_ini(dc, file_path):
+
+#     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+#     with open(file_path, "w", encoding="utf-8") as f:
+#         for i, row in enumerate(dc.lut):  
+#             f.write(f"[LUT_{i}]\n")  
+#             for value in row:  
+#                 f.write(f"{format(value, 'X')}\n")  # index 없이 값만 저장
+#             f.write("\n")  # 섹션 간 구분을 위해 개행 추가
+
+
+
+# def save_dc_lut_as_bin(dc, file_path):
+
+#     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+#     with open(file_path, "wb") as f:  
+#         for row in dc.lut:
+#             byteArr = bytearray(row)  # 리스트를 bytearray로 변환
+#             f.write(byteArr)  # 바이너리 데이터 저장
+
+# *****************************************************************************
 
 if __name__ == '__main__':
     pot = socketPot.PotConnection()
@@ -80,9 +187,85 @@ if __name__ == '__main__':
     #print(f"dc.rPhiContainer[0][0]: {dc.rPhiContainer[0][0]}")
     #print(f"dc.rAlphaContainer[0][0]: {dc.rAlphaContainer[0][0]}")
 
-    # test2 : NAND Vparam read
-    readNANDLGDVparam(pot)
 
+# ****************************************************************************
+    # test2 : NAND Vparam read
+    # readNANDLGDVparam(pot)
+    readNANDOC1Flag(pot)
     
-    print(f"dc.lut[0][0]: {dc.lut[0][0]}") # T24
+
+    # save_dc_lut_as_ini(dc, "output/[LGD_Vpara] rework.ini")
+    save_dc_lut_as_ini(dc, "output/[OC1_Flag] rework.ini")
+
+# ****************************************************************************
+    # load_dc_lut_from_ini(dc, "output/[OC1_Flag] rework.ini")
+
+    # writeNANDOC1Flag(pot)
+
+
+    # print(f"dc.lut[0][0]: {dc.lut[0][0]}") # T24
     # print(f"dc.vParam[0]: {dc.vParam[0]}") # T26
+
+
+
+
+
+
+
+
+
+
+
+
+# def save_lut_to_ini(self, file_path: str) -> None:
+
+#     # config = configparser.ConfigParser()
+
+
+#     # lut_data_str = ','.join(map(str, lut[:LINE_LENGTH]))
+
+#     # config['LUT'] = {'order': str(order), 'data': lut_data_str}
+
+#     # 파일 저장
+#     with open(file_path, 'w') as configfile:
+#         config.write(configfile)
+
+#     print(f"LUT data saved to {file_path}")
+
+
+# def save_lut_to_ini(self, file_path: str) -> None:
+
+#     # if self.gv.ASIC_MODEL in ['T26']:
+#     #     lut = self.dc.vParam
+#     #     LINE_LENGTH = 30720
+#     # else:
+#     #     lut = self.dc.lut
+#     #     LINE_LENGTH = self.gv.LINE_LENGTH
+
+#     lut = self.dc.lut
+#     LINE_LENGTH = self.gv.LINE_LENGTH
+
+
+#     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+#     with open(file_path, 'w') as file:
+#         for index, row in enumerate(lut):
+#             lut_data_str = ','.join(map(str, row[:LINE_LENGTH]))
+#             file.write(f"[LUT_{index}]\n")
+#             file.write(f"data = {lut_data_str}\n\n")
+
+#     print(f"LUT data saved to {file_path}")
+
+
+
+# def save_dc_lut_as_ini(dc, file_path):
+
+#     os.makedirs(os.path.dirname(file_path), exist_ok=True) 
+
+#     with open(file_path, "w", encoding="utf-8") as f:
+#         # f.write("[V PARAMETER]\n")  
+
+#         for i in enumerate(dc.lut): 
+#             for index, value in enumerate(dc.lut[i]):  
+#                 f.write(f"{index}={format(value, 'X')}\n")  
+
