@@ -1,4 +1,5 @@
 import os
+import csv
 
 from socketPot import socketPot, globalMemory
 
@@ -51,7 +52,6 @@ def readNANDOC1Flag(pot):
     #     pot.readTransferLine(cmd = gv.CMD_RD_NAND_OC1_FLAG, lineNumber = 0, dataType = 'setting')
 
     pot.readTransferLine(cmd = gv.CMD_RD_NAND_OC1_FLAG, lineNumber = 0, dataType = 'setting')
-
     pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE)
 
 def writeNANDOC1Flag(pot):
@@ -65,6 +65,58 @@ def eraseNANDLGDOC1Flag(pot):
     pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
     pot.writeTransferMono(cmd = gv.CMD_ER_NAND_OC1_FLAG)
     pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE) 
+
+
+def readNANDLParam(pot):
+
+    pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
+    pot.readTransferLine(cmd = gv.CMD_RD_NAND_LPARAM, lineNumber = 0, dataType = 'setting')
+    pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE)
+
+def writeNANDLParam(pot):
+
+    pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
+    pot.writeTransferMono(cmd = gv.CMD_ER_NAND_LPARAM)
+    pot.writeTransferLine(cmd = gv.CMD_WR_NAND_LPARAM, lineNumber = 0, dataType = 'setting')
+    pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE)
+
+def eraseNANDLParam(pot):
+
+    pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
+    pot.writeTransferMono(cmd = gv.CMD_ER_NAND_LPARAM)
+    pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE) 
+
+
+
+def readNANDSParam(pot):
+
+    pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
+    pot.readTransferLine(cmd = gv.CMD_RD_NAND_S_PARAM, lineNumber = 0, dataType = 'setting')
+    pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE)
+
+def writeNANDSParam(pot):
+
+    pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
+    pot.writeTransferMono(cmd = gv.CMD_ER_NAND_S_PARAM)
+    pot.writeTransferLine(cmd = gv.CMD_WR_NAND_S_PARAM, lineNumber = 0, dataType = 'setting')
+    pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE)
+
+def eraseNANDSParam(pot):
+
+    pot.writeTransferMono(cmd = gv.CMD_SET_PCMODE)
+    pot.writeTransferMono(cmd = gv.CMD_ER_NAND_S_PARAM)
+    pot.writeTransferMono(cmd = gv.CMD_CLR_PCMODE) 
+
+
+
+    # CMD_RD_NAND_S_PARAM = _getCmdBytes("0x6000")
+    # CMD_WR_NAND_S_PARAM = _getCmdBytes("0x6020")
+    # CMD_ER_NAND_S_PARAM = _getCmdBytes("0x6040")
+    # CMD_RD_NAND_G_PARAM = _getCmdBytes("0x6900")
+    # CMD_WR_NAND_G_PARAM = _getCmdBytes("0x6920")
+    # CMD_ER_NAND_G_PARAM = _getCmdBytes("0x6940")
+
+
 
 
 # ************************************************************************************
@@ -147,10 +199,23 @@ def load_dc_lut_from_ini(dc, file_path):
             if line.startswith("[") and line.endswith("]"):  
                 continue  
             if "=" in line:  
-                _, value = line.split("=")  # index는 무시하고 value만 추출
-                first_row.append(int(value, 16))  # 16진수를 정수로 변환하여 저장
+                _, value = line.split("=")  
+                first_row.append(int(value, 16))  
 
     dc.lut[0] = first_row
+
+
+def save_dc_lut_as_csv(dc, file_path, format):    
+
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)  
+
+    if format == "csv":
+        with open(file_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            for row in dc.lut:
+                writer.writerow(row)
+    else:
+        print("N.A. format")
 
 
 
@@ -165,7 +230,6 @@ def load_dc_lut_from_ini(dc, file_path):
 #             for value in row:  
 #                 f.write(f"{format(value, 'X')}\n")  # index 없이 값만 저장
 #             f.write("\n")  # 섹션 간 구분을 위해 개행 추가
-
 
 
 # def save_dc_lut_as_bin(dc, file_path):
@@ -191,22 +255,25 @@ if __name__ == '__main__':
 # ****************************************************************************
     # test2 : NAND Vparam read
     # readNANDLGDVparam(pot)
-    readNANDOC1Flag(pot)
-    
+    # readNANDOC1Flag(pot) 
 
-    # save_dc_lut_as_ini(dc, "output/[LGD_Vpara] rework.ini")
-    save_dc_lut_as_ini(dc, "output/[OC1_Flag] rework.ini")
+    # # save_dc_lut_as_ini(dc, "output/[LGD_Vpara] rework.ini")
+    # save_dc_lut_as_ini(dc, "output/[OC1_Flag] rework.ini")
 
-# ****************************************************************************
     # load_dc_lut_from_ini(dc, "output/[OC1_Flag] rework.ini")
-
     # writeNANDOC1Flag(pot)
 
+    # readNANDLParam(pot) 
+    # save_dc_lut_as_ini(dc, "output/[L Parmeter] rework.ini")
+
+    # writeNANDLParam(pot)
+    # load_dc_lut_from_ini(dc, "output/[L Parmeter] rework.ini")
+
+    readNANDSParam(pot)
+    save_dc_lut_as_csv(dc, "output/[S Parmeter] rework.csv", format="csv")
 
     # print(f"dc.lut[0][0]: {dc.lut[0][0]}") # T24
     # print(f"dc.vParam[0]: {dc.vParam[0]}") # T26
-
-
 
 
 
